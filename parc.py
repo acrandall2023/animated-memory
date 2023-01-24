@@ -5,6 +5,7 @@ PARC information retrieval script testing
 import csv
 import requests
 import keyring
+from dateutil import parser
 from bs4 import BeautifulSoup
 from atlassian import Jira
 
@@ -24,7 +25,46 @@ class PARC:
 				return "NOC-" + jiraticket
 			elif int(jiraticket) < 10000:
 				return "PUR-" + jiraticket
-		return "PO Does not currently exist"
+		return "PO Does not exist"
+
+	def _get_approval(self) -> str:
+		jiraticket = self._get_jira()
+		if "PUR" in jiraticket:
+			jiraQuery = Jira(
+				url='https://servicedesk.cenic.org/',
+				username = keyring.get_password("cas", "user"),
+				password = keyring.get_password("cas", "password")
+			)
+			results = jiraQuery.get_issue(
+				jiraticket, fields=["customfield_10100"]
+			)
+
+			try:
+				approval1 = (
+					parser.isoparse((results["fields"]["customfield_10100"][0]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
+				)
+			except:
+				approval1 = ("")
+
+			try:
+				approval2 = (
+					parser.isoparse((results["fields"]["customfield_10100"][1]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
+				)
+			except:
+				approval2 = ("")
+
+			try:
+				approval3 = (
+					parser.isoparse((results["fields"]["customfield_10100"][2]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
+				)
+			except:
+				approval3 = ("")
+
+			return [approval1, approval2, approval3]
+		else:
+			return ["","",""]
+
+#		print(jiraticket)
 
 	def _get_ordered(self) -> str:
 		self.order = self.soup.find(text="Requested By")
@@ -70,6 +110,7 @@ class PARC:
 		segment: bool = True,
 		vendor: bool = True,
 		grand_total: bool = True,
+		approval: bool = True,
 	) -> list:
 		# Return list of data for given PO Number
 		po_info = [po]
@@ -89,6 +130,15 @@ class PARC:
 			po_info.append(self._get_vendor())
 		if grand_total:
 			po_info.append(self._get_grand_total())
+		if approval:
+			po_info.append("")
+			po_info.append("")
+			po_info.append("")
+			po_info.append("")
+			po_info.append("")
+			po_info.append(self._get_approval()[2])
+			po_info.append(self._get_approval()[1])
+			po_info.append(self._get_approval()[0])
 
 		return po_info
 
