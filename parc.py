@@ -40,6 +40,7 @@ class PARC:
 			)
 
 			try:
+				# approval1 is Finance approval
 				approval1 = (
 					parser.isoparse((results["fields"]["customfield_10100"][0]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
 				)
@@ -47,6 +48,7 @@ class PARC:
 				approval1 = ("")
 
 			try:
+				#approval2 is Director approval
 				approval2 = (
 					parser.isoparse((results["fields"]["customfield_10100"][1]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
 				)
@@ -54,6 +56,7 @@ class PARC:
 				approval2 = ("")
 
 			try:
+				#approval3 is Core approval
 				approval3 = (
 					parser.isoparse((results["fields"]["customfield_10100"][2]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
 				)
@@ -63,8 +66,6 @@ class PARC:
 			return [approval1, approval2, approval3]
 		else:
 			return ["","",""]
-
-#		print(jiraticket)
 
 	def _get_ordered(self) -> str:
 		self.order = self.soup.find(text="Requested By")
@@ -110,6 +111,7 @@ class PARC:
 		segment: bool = True,
 		vendor: bool = True,
 		grand_total: bool = True,
+		status: bool = True,
 		approval: bool = True,
 	) -> list:
 		# Return list of data for given PO Number
@@ -131,6 +133,7 @@ class PARC:
 		if grand_total:
 			po_info.append(self._get_grand_total())
 		if approval:
+			po_info.append("")
 			po_info.append("")
 			po_info.append("")
 			po_info.append("")
