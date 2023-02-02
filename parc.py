@@ -10,6 +10,9 @@ from bs4 import BeautifulSoup
 from atlassian import Jira
 
 
+APPROVERS = "customfield_10100"
+
+
 class PARC:
 	url = "https://parc.cenic.org/cenic-parc/printpurchaseorder.cfm?purchaseordersnumber="
 
@@ -36,13 +39,13 @@ class PARC:
 				password = keyring.get_password("cas", "password")
 			)
 			results = jiraQuery.get_issue(
-				jiraticket, fields=["customfield_10100"]
+				jiraticket, fields=[APPROVERS]
 			)
 
 			try:
 				# approval1 is Finance approval
 				approval1 = (
-					parser.isoparse((results["fields"]["customfield_10100"][0]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
+					parser.isoparse((results["fields"][APPROVERS][0]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
 				)
 			except:
 				approval1 = ("")
@@ -50,7 +53,7 @@ class PARC:
 			try:
 				#approval2 is Director approval
 				approval2 = (
-					parser.isoparse((results["fields"]["customfield_10100"][1]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
+					parser.isoparse((results["fields"][APPROVERS][1]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
 				)
 			except:
 				approval2 = ("")
@@ -58,7 +61,7 @@ class PARC:
 			try:
 				#approval3 is Core approval
 				approval3 = (
-					parser.isoparse((results["fields"]["customfield_10100"][2]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
+					parser.isoparse((results["fields"][APPROVERS][2]["completedDate"]["iso8601"])).strftime('%m-%d-%Y')
 				)
 			except:
 				approval3 = ("")
