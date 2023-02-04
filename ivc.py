@@ -4,8 +4,6 @@ This script is intended to pull information from JIRA about IVC related tickets 
 
 # Keyring is used for JIRA authentication
 import keyring
-# json is used to export information to json file with pretty printed text
-import json
 # CSV is used to export to a csv file
 import csv
 # parser from dateutil to convert ISO8601 date to MM-DD-YYYY
@@ -63,7 +61,7 @@ class IVCJira:
 		except:
 			ticket = "No ticket"
 
-#		append all information to ivc_info, if the results are empty, no result
+#		append all information to ivc_info, if the results are an empty dictionary, append no result
 		if results == {}:
 			ivc_info.append(ticket)
 			ivc_info.append("No result")
