@@ -9,6 +9,8 @@ import csv
 # parser from dateutil to convert ISO8601 date to MM-DD-YYYY
 from dateutil import parser
 
+import pygsheets
+
 
 # using the Jira module from Atlassian to pull the information from JIRA
 from atlassian import Jira
@@ -23,17 +25,34 @@ SITE_NAME = "customfield_11507"
 TRK_NUM = "customfield_11509"
 ARRIVAL = "customfield_11505"
 
+#using keyring to log in to JIRA
+jira = Jira(
+	url='https://servicedesk.cenic.org/',
+	username = keyring.get_password("cas", "user"),
+	password = keyring.get_password("cas", "password")
+		)
+
+#The query to find open tickets
+_jql = 'project = "Inventory Control" AND status not in (Resolved, Deleted, New) ORDER BY createdDate asc'
+
+
 class IVCJira:
 
+	def get_tickets():
+
+#		using the jql function with the _jql query
+		queryJira = jira.jql(_jql)
+
+#		establish ivc as a blank list
+		ivc = []
+
+#		add each ticket to ivc
+		for i in range(len(queryJira['issues'])):
+			ivc += queryJira['issues'][i]['key'].split()
+		return ivc
+
+
 	def get_ivc(ivc):
-
-#		using keyring to log in to JIRA
-		jira = Jira(
-			url='https://servicedesk.cenic.org/',
-			username = keyring.get_password("cas", "user"),
-			password = keyring.get_password("cas", "password")
-			)
-
 #		establish ivc_info as a list
 		ivc_info = []
 
@@ -83,15 +102,25 @@ class IVCJira:
 
 def main():
 
-#	ivc.txt contains the tickets being checked
-	with open("ivc.txt", "r", encoding="UTF-8") as f:
-		ivcs = f.read().replace(", ", "\n").split()
+	ivcs = IVCJira.get_tickets()
 
-#	results are sent to ivc_result.csv
-	with open("ivc_result.csv", "w", encoding="UTF-8") as f:
-		writer = csv.writer(f)
-		for ivc in ivcs:
-			writer.writerow(IVCJira.get_ivc(ivc))
+#	Authenticate with GSheets
+	gcpath = '/Users/acrandall/Documents/Python/OAuth/client_secret.json'
+	gc = pygsheets.authorize(client_secret=gcpath, local=True)
+#	Open the sheet to edit
+	sh = gc.open('pygsheets testing')
+#	Which sheet of the whole worksheet to edit
+	wk1 = sh[0]
+
+#	for each item in ivcs
+	for i in ivcs:
+#		Check if the value already exists, if it does update it
+		if wk1.find(i,matchCase=True) != []:
+			existRow = wk1.find(i,matchCase=True)[0].row
+			wk1.update_row(existRow,IVCJira.get_ivc(i))
+#		If it does not exist already, create new row and add information
+		else:
+			wk1.append_table(IVCJira.get_ivc(i),overwrite=False)
 
 if __name__ == "__main__":
 	main()
