@@ -107,20 +107,25 @@ def main():
 #	Authenticate with GSheets
 	gcpath = '/Users/acrandall/Documents/Python/OAuth/client_secret.json'
 	gc = pygsheets.authorize(client_secret=gcpath, local=True)
+
 #	Open the sheet to edit
-	sh = gc.open('pygsheets testing')
+	sh = gc.open('IVC Tracker')
+
 #	Which sheet of the whole worksheet to edit
-	wk1 = sh[0]
+	wkship = sh.worksheet_by_title('OutboundShipping')
+	wkreq = sh.worksheet_by_title('EquipmentRequest')
+	wkret = sh.worksheet_by_title('EquipmentReturns')
 
 #	for each item in ivcs
 	for i in ivcs:
+
 #		Check if the value already exists, if it does update it
-		if wk1.find(i,matchCase=True) != []:
-			existRow = wk1.find(i,matchCase=True)[0].row
-			wk1.update_row(existRow,IVCJira.get_ivc(i))
+		if wkship.find(i,matchCase=True) != []:
+			existRow = wkship.find(i,matchCase=True)[0].row
+			wkship.update_row(existRow,IVCJira.get_ivc(i))
 #		If it does not exist already, create new row and add information
 		else:
-			wk1.append_table(IVCJira.get_ivc(i),overwrite=False)
+			wkship.append_table(IVCJira.get_ivc(i),overwrite=False)
 
 if __name__ == "__main__":
 	main()
