@@ -32,13 +32,13 @@ jira = Jira(
 	password = keyring.get_password("cas", "password")
 		)
 
-#The query to find open tickets
-_jql = 'project = "Inventory Control" AND status not in (Resolved, Deleted, New) ORDER BY createdDate asc'
-
 
 class IVCJira:
 
-	def get_tickets():
+	def get_ship():
+
+#		The query to find open tickets
+		_jql = 'project = "Inventory Control" AND issuetype = "Outbound Shipping" AND status not in (Deleted, New) ORDER BY createdDate asc'
 
 #		using the jql function with the _jql query
 		queryJira = jira.jql(_jql)
@@ -51,6 +51,22 @@ class IVCJira:
 			ivc += queryJira['issues'][i]['key'].split()
 		return ivc
 
+	def get_req():
+
+		_jql = 'project = "Inventory Control" AND issuetype = "Equipment Request" AND status not in (Deleted, New) ORDER BY createdDate asc'
+		queryJira = jira.jql(_jql)
+		ivc = []
+		for i in range(len(queryJira['issues'])):
+			ivc += queryJira['issues'][i]['key'].split()
+		return ivc
+
+	def get_ret():
+		_jql = 'project = "Inventory Control" AND issuetype = "Equipment Returns" AND status not in (Deleted, New) ORDER BY createdDate asc'
+		queryJira = jira.jql(_jql)
+		ivc = []
+		for i in range(len(queryJira['issues'])):
+			ivc += queryJira['issues'][i]['key'].split()
+		return ivc
 
 	def get_ivc(ivc):
 #		establish ivc_info as a list
@@ -102,7 +118,9 @@ class IVCJira:
 
 def main():
 
-	ivcs = IVCJira.get_tickets()
+	ivcship = IVCJira.get_ship()
+	ivcreq = IVCJira.get_req()
+	ivcret = IVCJira.get_ret()
 
 #	Authenticate with GSheets
 	gcpath = '/Users/acrandall/Documents/Python/OAuth/client_secret.json'
@@ -112,12 +130,12 @@ def main():
 	sh = gc.open('IVC Tracker')
 
 #	Which sheet of the whole worksheet to edit
-	wkship = sh.worksheet_by_title('OutboundShipping')
-	wkreq = sh.worksheet_by_title('EquipmentRequest')
-	wkret = sh.worksheet_by_title('EquipmentReturns')
+	wkship = sh.worksheet('title','OutboundShipping')
+	wkreq = sh.worksheet('title','EquipmentRequest')
+	wkret = sh.worksheet('title','EquipmentReturns')
 
-#	for each item in ivcs
-	for i in ivcs:
+#	for each item in ivcship
+	for i in ivcship:
 
 #		Check if the value already exists, if it does update it
 		if wkship.find(i,matchCase=True) != []:
@@ -126,6 +144,20 @@ def main():
 #		If it does not exist already, create new row and add information
 		else:
 			wkship.append_table(IVCJira.get_ivc(i),overwrite=False)
+
+	for i in ivcreq:
+		if wkreq.find(i,matchCase=True) != []:
+			existRow = wkreq.find(i,matchCase=True)[0].row
+			wkreq.update_row(existRow,IVCJira.get_ivc(i))
+		else:
+			wkreq.append_table(IVCJira.get_ivc(i),overwrite=False)
+
+	for i in ivcret:
+		if wkret.find(i,matchCase=True) != []:
+			existRow = wkret.find(i,matchCase=True)[0].row
+			wkret.update_row(existRow,IVCJira.get_ivc(i))
+		else:
+			wkret.append_table(IVCJira.get_ivc(i),overwrite=False)
 
 if __name__ == "__main__":
 	main()
