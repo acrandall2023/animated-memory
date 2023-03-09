@@ -34,16 +34,16 @@ jira = Jira(
 
 class IVCJira:
     def get_ship():
-        # 		The query to find open tickets
+        # The query to find open tickets
         _jql = 'project = "Inventory Control" AND issuetype = "Outbound Shipping" AND status not in (Deleted, New) ORDER BY createdDate asc'
 
-        # 		using the jql function with the _jql query
+        # using the jql function with the _jql query
         queryJira = jira.jql(_jql)
 
-        # 		establish ivc as a blank list
+        # establish ivc as a blank list
         ivc = []
 
-        # 		add each ticket to ivc
+        # add each ticket to ivc
         for i in range(len(queryJira["issues"])):
             ivc += queryJira["issues"][i]["key"].split()
         return ivc
@@ -65,17 +65,17 @@ class IVCJira:
         return ivc
 
     def get_ivc(ivc):
-        # 		establish ivc_info as a list
+        # establish ivc_info as a list
         ivc_info = []
 
-        # 		contacting jira to get information about ivc ticket provided from ivc.txt
+        # contacting jira to get information about ivc ticket provided from ivc.txt
         results = {}
         try:
             results = jira.issue(ivc)
         except:
             ivc_info.append(ivc)
 
-        # 		interpret results into individual variables, if the ticket doesn't exist, go to exception
+        # interpret results into individual variables, if the ticket doesn't exist, go to exception
         try:
             ticket = results["key"]
             issue = results["fields"]["issuetype"]["name"]
@@ -92,7 +92,7 @@ class IVCJira:
         except:
             ticket = "No ticket"
 
-        # 		append all information to ivc_info, if the results are an empty dictionary, append no result
+        # append all information to ivc_info, if the results are an empty dictionary, append no result
         if results == {}:
             ivc_info.append(ticket)
             ivc_info.append("No result")
@@ -117,24 +117,24 @@ def main():
     ivcreq = IVCJira.get_req()
     ivcret = IVCJira.get_ret()
 
-    # 	Authenticate with GSheets using client_secret.json in current directory
+    # Authenticate with GSheets using client_secret.json in current directory
     gc = pygsheets.authorize(local=True)
 
-    # 	Open the sheet to edit
+    # Open the sheet to edit
     sh = gc.open("IVC Tracker")
 
-    # 	Which sheet of the whole worksheet to edit
+    # Which sheet of the whole worksheet to edit
     wkship = sh.worksheet("title", "OutboundShipping")
     wkreq = sh.worksheet("title", "EquipmentRequest")
     wkret = sh.worksheet("title", "EquipmentReturns")
 
-    # 	for each item in ivcship
+    # for each item in ivcship
     for i in ivcship:
-        # 		Check if the value already exists, if it does update it
+        # Check if the value already exists, if it does update it
         if wkship.find(i, matchCase=True) != []:
             existRow = wkship.find(i, matchCase=True)[0].row
             wkship.update_row(existRow, IVCJira.get_ivc(i))
-        # 		If it does not exist already, create new row and add information
+        # If it does not exist already, create new row and add information
         else:
             wkship.append_table(IVCJira.get_ivc(i), overwrite=False)
 
