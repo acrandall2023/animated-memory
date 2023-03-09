@@ -5,14 +5,11 @@ This script is intended to pull information from JIRA about IVC related tickets 
 # Keyring is used for JIRA authentication
 import keyring
 
-# CSV is used to export to a csv file
-import csv
-
 # parser from dateutil to convert ISO8601 date to MM-DD-YYYY
 from dateutil import parser
 
+# pygsheets used to interface with Google Sheets
 import pygsheets
-
 
 # using the Jira module from Atlassian to pull the information from JIRA
 from atlassian import Jira
@@ -85,10 +82,10 @@ class IVCJira:
             created = parser.isoparse(results["fields"]["created"]).strftime("%m-%d-%Y")
             status = results["fields"]["status"]["name"]
             requestor = results["fields"]["reporter"]["displayName"]
-            contact = results["fields"][SITE_CONTACT]
-            phone = results["fields"][PHONE]
+            # contact = results["fields"][SITE_CONTACT]
+            # phone = results["fields"][PHONE]
             requestItems = results["fields"][ITEMS]
-            insurance = str(results["fields"][INSURANCE])
+            # insurance = str(results["fields"][INSURANCE])
             siteName = results["fields"][SITE_NAME]
             tracking = results["fields"][TRK_NUM]
             arrivalDate = results["fields"][ARRIVAL]
@@ -106,9 +103,9 @@ class IVCJira:
             ivc_info.append(requestor)
             ivc_info.append(requestItems)
             ivc_info.append(siteName)
-            ivc_info.append(contact)
-            ivc_info.append(phone)
-            ivc_info.append(insurance)
+            # ivc_info.append(contact)
+            # ivc_info.append(phone)
+            # ivc_info.append(insurance)
             ivc_info.append(arrivalDate)
             ivc_info.append(tracking)
             ivc_info.append(status)
@@ -120,9 +117,8 @@ def main():
     ivcreq = IVCJira.get_req()
     ivcret = IVCJira.get_ret()
 
-    # 	Authenticate with GSheets
-    gcpath = "/Users/acrandall/Documents/Python/OAuth/client_secret.json"
-    gc = pygsheets.authorize(client_secret=gcpath, local=True)
+    # 	Authenticate with GSheets using client_secret.json in current directory
+    gc = pygsheets.authorize(local=True)
 
     # 	Open the sheet to edit
     sh = gc.open("IVC Tracker")
@@ -155,6 +151,7 @@ def main():
             wkret.update_row(existRow, IVCJira.get_ivc(i))
         else:
             wkret.append_table(IVCJira.get_ivc(i), overwrite=False)
+    print("Done. IVC Tracker has been updated with latest information")
 
 
 if __name__ == "__main__":
