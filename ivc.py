@@ -14,6 +14,9 @@ import pygsheets
 # using the Jira module from Atlassian to pull the information from JIRA
 from atlassian import Jira
 
+# For timing decorator
+from time import time
+
 # Constants to replace customfields in the export
 ADDRESS = "customfield_11520"
 ITEMS = "customfield_11516"
@@ -32,10 +35,24 @@ jira = Jira(
 )
 
 
+def timer_func(func):
+    # This function shows the execution time of
+    # the function object passed
+    def wrap_func(*args, **kwargs):
+        t1 = time()
+        result = func(*args, **kwargs)
+        t2 = time()
+        print(f"Function {func.__name__!r} executed in {(t2-t1):.4f}s")
+        return result
+
+    return wrap_func
+
+
 class IVCJira:
+    @timer_func
     def get_ship():
         # The query to find open tickets
-        _jql = 'project = "Inventory Control" AND issuetype = "Outbound Shipping" AND status not in (Deleted, New) ORDER BY createdDate asc'
+        _jql = 'project = "Inventory Control" AND issuetype = "Outbound Shipping" AND status not in (Deleted, New) AND updated > endOfDay(-4) ORDER BY createdDate ASC'
 
         # using the jql function with the _jql query
         queryJira = jira.jql(_jql)
@@ -48,22 +65,25 @@ class IVCJira:
             ivc += queryJira["issues"][i]["key"].split()
         return ivc
 
+    @timer_func
     def get_req():
-        _jql = 'project = "Inventory Control" AND issuetype = "Equipment Request" AND status not in (Deleted, New) ORDER BY createdDate asc'
+        _jql = 'project = "Inventory Control" AND issuetype = "Equipment Request" AND status not in (Deleted, New) AND updated > endOfDay(-4) ORDER BY createdDate asc'
         queryJira = jira.jql(_jql)
         ivc = []
         for i in range(len(queryJira["issues"])):
             ivc += queryJira["issues"][i]["key"].split()
         return ivc
 
+    @timer_func
     def get_ret():
-        _jql = 'project = "Inventory Control" AND issuetype = "Equipment Returns" AND status not in (Deleted, New) ORDER BY createdDate asc'
+        _jql = 'project = "Inventory Control" AND issuetype = "Equipment Returns" AND status not in (Deleted, New) AND updated > endOfDay(-4) ORDER BY createdDate asc'
         queryJira = jira.jql(_jql)
         ivc = []
         for i in range(len(queryJira["issues"])):
             ivc += queryJira["issues"][i]["key"].split()
         return ivc
 
+    @timer_func
     def get_ivc(ivc):
         # establish ivc_info as a list
         ivc_info = []
@@ -112,6 +132,7 @@ class IVCJira:
         return ivc_info
 
 
+@timer_func
 def main():
     ivcship = IVCJira.get_ship()
     ivcreq = IVCJira.get_req()
