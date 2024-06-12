@@ -14,7 +14,10 @@ from rich import print
 APPROVERS = "customfield_10100"
 JIRAURL = "https://servicedesk.cenic.org/"
 GCPATH = os.path.expanduser("~") + "/Documents/Python"
-POPATH = "/Users/acrandall/Google Drive/Shared drives/CENIC Purchasing/1. Unsigned PO/21000 FY23-24"
+POPATH = (
+    os.path.expanduser("~")
+    + "/Google Drive/Shared drives/CENIC Purchasing/1. Unsigned PO/21000 FY23-24"
+)
 
 
 def _make_results(po):
@@ -36,14 +39,16 @@ def _get_po(results):
 
 
 def _get_date(results):
-    podate = [x for x in results if "La Mirada, CA 90638 16700" in x]
-    podate = str(podate)[-12:].strip(" ]' ")
+    podate = [
+        x for x in results if "La Mirada, CA 90638 16700 Valley View, Suite 168" in x
+    ]
+    podate = str(podate)[51:].strip("]'")
     return podate
 
 
 def _get_ticket(results):
     ticket = [x for x in results if "CENIC CENIC" in x]
-    ticket = str(ticket)[-9:].strip(" CENIC']")
+    ticket = str(ticket)[-9:].strip(" CENIC PUR-']")
     if int(ticket) > 10000:
         ticket = "NOC-" + ticket
         approval1 = ""
